@@ -27,10 +27,10 @@ cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/.. -DGMX_MPI=ON -DGMX_OPENMP=ON \
     -DGMX_FFT_LIBRARY=fftw3 -DFFTWF_LIBRARY=/opt/software/fftw/3/3.3.10-gcc-openmpi/lib/libfftw3f.so -DFFTWF_INCLUDE_DIR=/opt/software/fftw/3/3.3.10-gcc-openmpi/include
 
 # build
-make -j32
+make -j8
 
 # Optional: test the build, uncomment the line below to build and run the regression tests
-#make -j32 check
+make -j8 check
 
 # install
 make install

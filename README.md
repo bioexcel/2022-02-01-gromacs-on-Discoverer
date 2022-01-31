@@ -1,31 +1,51 @@
 # Discoverer GROMACS lesson
 
+The repo contains the files needed for a hands on introduction to running and building [GROMACS](https://www.gromacs.org/) on [Discoverer](https://sofiatech.bg/en/petascale-supercomputer/).
+
+This work is presented by BioExcel https://bioexcel.eu/  and EPCC https://www.epcc.ed.ac.uk/  
+
+Contact: s.farr@epcc.ed.ac.uk
+
+
+This README contains all the instructions and commands needed for the lesson. Anything in a code block quote such as this:
+>```
+>hostname
+>```
+is supposed to be copy and pasted into the terminal in Discoverer.
+
+You should clone this repo onto your Discoverer account:
+>```
+>git clone https://github.com/sfarr-epcc/gromacs_on_discoverer.git
+>```
+
+
+
 # Running GROMACS
 
 ## Loading the module
 
-The first step to running GROMACS on Discover is to load one of the GROMACS modules. There are several available, you can view them with the ``module avail gromacs`` command
+The first step to running GROMACS on Discover is to load one of the GROMACS modules. There are several available, you can view them with the `module avail gromacs` command
 
-```bash
-module avail gromacs
-```
+>```bash
+>module avail gromacs
+>```
 
 The out put will look similar to this:
->```
->------------------------------------------ /opt/software/modulefiles -------------------------
->gromacs/2021/2021.3-intel-nogpu-mpi           gromacs/2021/2021.4-oneapi-nogpu-mpi          
->gromacs/2021/2021.3-intel-nogpu-nompi         gromacs/2021/latest-intel-nogpu-mpi           
->gromacs/2021/2021.4-intel-nogpu-mpi           gromacs/2021/latest-intel-nogpu-nompi         
->gromacs/2021/2021.4-intel-nogpu-nompi         gromacs/2021/latest-intel-nogpu-openmpi-aocc  
->gromacs/2021/2021.4-intel-nogpu-openmpi-aocc  gromacs/2021/latest-intel-nogpu-openmpi-gcc   
->gromacs/2021/2021.4-intel-nogpu-openmpi-gcc   gromacs/2021/latest-oneapi-nogpu-mpi    
->```
+```
+------------------------------------------ /opt/software/modulefiles -------------------------
+gromacs/2021/2021.3-intel-nogpu-mpi           gromacs/2021/2021.4-oneapi-nogpu-mpi          
+gromacs/2021/2021.3-intel-nogpu-nompi         gromacs/2021/latest-intel-nogpu-mpi           
+gromacs/2021/2021.4-intel-nogpu-mpi           gromacs/2021/latest-intel-nogpu-nompi         
+gromacs/2021/2021.4-intel-nogpu-nompi         gromacs/2021/latest-intel-nogpu-openmpi-aocc  
+gromacs/2021/2021.4-intel-nogpu-openmpi-aocc  gromacs/2021/latest-intel-nogpu-openmpi-gcc   
+gromacs/2021/2021.4-intel-nogpu-openmpi-gcc   gromacs/2021/latest-oneapi-nogpu-mpi    
+```
 
 There are currently two different release version 2021.3 and 2021.4. And multiple different builds. All should give good performance and the same results. We recommend the version that uses OpenMPI and gcc, this is the one called ``gromacs/2021/latest-intel-nogpu-openmpi-gcc``  
 
-```bash
-module load gromacs/2021/latest-intel-nogpu-openmpi-gcc
-``` 
+>```bash
+>module load gromacs/2021/latest-intel-nogpu-openmpi-gcc
+>``` 
 
 ---
 ## The input .tpr file
@@ -40,9 +60,9 @@ You will find this file in the ``running`` subdirectory of this repo.
 
 It is a binary file so cannot be opened with a text editor, but the contents can be viewed using the ``gmx dump`` tool
 
-```bash
-gmx_mpi dump -s benchMEM.tpr
-```
+>```bash
+>gmx_mpi dump -s benchMEM.tpr
+>```
 ---
 
 ## Running a simulation on the compute nodes
@@ -71,9 +91,9 @@ mpirun gmx_mpi mdrun -ntomp ${SLURM_CPUS_PER_TASK} -v -s benchMEM.tpr
 
 You can run this using the ``sbatch`` command
 
-```bash
-sbatch gmx.slurm
-```
+>```bash
+>sbatch gmx.slurm
+>```
 ---
 
 ## Benchmarking
@@ -105,7 +125,7 @@ E.g. for 256 MPI tasks:
 ```
 
 **NOTE** 
-For consistent benchmarking results and optimal performance for this benchmark input we have found that you should add the flags ``-resethway -dlb yes -notunepme -noconfout`` to the ``mdrun`` command.
+For consistent benchmarking results and optimal performance for this benchmark input you should add the flags ``-resethway -dlb yes -notunepme -noconfout`` to the ``mdrun`` command.
 
 
 ```bash
@@ -132,6 +152,10 @@ The performance is reported at the bottom of the ``slurm-*.out`` and ``md.log`` 
                  (ns/day)    (hour/ns)
 Performance:      154.366        0.155
 ```
+
+The most useful number is the `Performance: 154.366 ns/day`. This tells us how much simulation time (in nano-seconds) can be simulated for 1 day of wall-clock time.
+
+
 ---
 
 
@@ -141,7 +165,7 @@ Performance:      154.366        0.155
 ## Things to investigate
 - You should try running with the following number of MPI processes:
 16, 32, 64, 128, 256, 512
-- Plot the results as graph
+- Plot the performance results as graph
 - What happens if you try using 1024?
 - Try turning off SMT, this is done by modifying the slurm script settings to:
     ```bash
@@ -161,8 +185,14 @@ Performance:      154.366        0.155
         ```
     - aocc + MPICH:
         ```
-        gromacs/2021/2021.4-intel-nogpu-mpi 
+        module load gromacs/2021/2021.4-intel-nogpu-mpi 
         ```
+- Try using hybrid OpenMP and MPI, e.g. 64 MPI tasks and 4 OpenMP:
+    ```bash
+        #SBATCH --nodes           1    
+        #SBATCH --ntasks-per-node 64
+        #SBATCH --cpus-per-task   4
+    ```  
 ---
 
 
@@ -172,93 +202,84 @@ Performance:      154.366        0.155
 
 We found that for most benchmarks the optimally performing version of GROMACS is obtained using GCC and OpenMPI. 
 
-This guide contains the steps needed to build GROMACS on Discoverer explaining some of the process. Anything in a code block can be directly copied and pasted into the terminal.
+This guide contains the steps needed to build GROMACS on Discoverer explaining some of the process. 
 
 ## Step 1: Download
 
 The first step is to download the GROMACS source code.
 
 
-```bash
-
-# download the source code
-wget https://ftp.gromacs.org/gromacs/gromacs-2021.4.tar.gz
-
-
-
-```
+>```bash
+># download the source code
+>wget https://ftp.gromacs.org/gromacs/gromacs-2021.4.tar.gz
+>```
 
 We then need to extract them.
 
 
-```bash
-
-# extract
-tar xvf gromacs-2021.4.tar.gz
-
-
-```
+>```bash
+># extract
+>tar xvf gromacs-2021.4.tar.gz
+>```
 
 There should then be a directory called ``gromacs-2021.4``.
 Move into that directory and create a new directory to build GROMACS in.
 
-```bash
-# move into the source code directory
-cd gromacs-2021.4
-
-# make the build directory
-mkdir build
-cd build
-
-```
+>```bash
+># move into the source code directory
+>cd gromacs-2021.4
+>
+># make the build directory
+>mkdir build
+>cd build
+>
+>```
 
 
 ## Step 2: Configuration
 
 We need to load the required modules on Discoverer, this chooses the compiler and MPI versions we will use.
 
-```bash
-# load the required modules
-module purge
-module load cmake 
-module load fftw/3/3.3.10-gcc-openmpi
-module load openmpi/4/gcc/latest
-module load openblas/latest-gcc
-```
+>```bash
+># load the required modules
+>module purge
+>module load cmake 
+>module load fftw/3/3.3.10-gcc-openmpi
+>module load openmpi/4/gcc/latest
+>module load openblas/latest-gcc
+>```
 
 GROMACS is built using the CMake build system.
 This requires two main parts: the configuration part which detects various compilation options and generates Makefiles; the make part which uses the CMake generated Makefiles to compile the source code.
 
 For the configuration part we need to give multiple options specific to the build we are doing on Discoverer
 
-```bash
-# cmake configuration
-cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/.. -DBUILD_SHARED_LIBS=OFF -DGMX_MPI=ON -DGMX_OPENMP=ON \
-    -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx \
-    
-    -DGMX_FFT_LIBRARY=fftw3 -DFFTWF_LIBRARY=/opt/software/fftw/3/3.3.10-gcc-openmpi/lib/libfftw3f.so -DFFTWF_INCLUDE_DIR=/opt/software/fftw/3/3.3.10-gcc-openmpi/include
-
-
-```
+>```bash
+># cmake configuration
+>cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/.. -DGMX_MPI=ON -DGMX_OPENMP=ON \
+>    -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx \
+>    -DREGRESSIONTEST_DOWNLOAD=ON \
+>    -DGMX_FFT_LIBRARY=fftw3 -DFFTWF_LIBRARY=/opt/software/fftw/3/3.3.10-gcc-openmpi/lib/libfftw3f.so -DFFTWF_INCLUDE_DIR=/opt/software/fftw/3/3.3.10-gcc-openmpi/include
+>```
 The above command will print out alot of information specifity the various settings CMake has detected and will be using.
 
 
 
 ## Step 3: Compilation, testing, and installation
 
-- ### Compilation
+### Compilation
 If the CMake configuration step was successful then the compilation can be done using the ``make`` command. 
 
-```bash
-# build
-make -j32
-```
+>```bash
+># build
+>make -j32
+>```
 The number after the ``J`` flag tells it how many parallel process to use for the compilation which can speed it up.
 
 There may be some compiler warnings printed, these can often be ignored, there should not be any errors. If there are errors you will have to go back to the configutation stage and try to resolve them.
 
 
-- ### Testing
+### Testing
 We can then test the build for correctness by running the regression tests, this can be slightly time consuming to run. But should be done in a few minutes.
 
 The ``make check`` command will build and then run the test cases, checking them for correctness aganinst the regression tests downloaded in step 1. the ``make test`` command will run the built test cases.
@@ -266,11 +287,11 @@ The ``make check`` command will build and then run the test cases, checking them
 
 
 
-```bash
-# Optional: build and run the regression tests
-
-make -j32 check
-```
+>```bash
+># Optional: build and run the regression tests
+>
+>make -j32 check
+>```
 
 
 
@@ -282,12 +303,13 @@ we have found that on Discover's front end login nodes three of the test cases f
 
 The install stage copies the executable files to the destination we specified in the configuration
 
-```bash
-# install
-make install
+>```bash
+># install
+>make install
+>
+>```
 
-```
-
+---
 
 ## Using a user built version of GROMACS 
 
@@ -295,9 +317,9 @@ After following the steps above the program will be installed in the folder call
 
 To use this version of GROMACS you first need to activate the environment
 
-```bash 
-source gromacs-2021.4/bin/gmxrc
-```
+>```bash 
+>source gromacs-2021.4/bin/gmxrc
+>```
 
 You will now be able to use the various GROMACS commands such as
 ```
@@ -305,12 +327,12 @@ gmx_mpi mdrun
 gmx_mpi grompp
 ```
 You can check it is using the version you have built and not one from a previous module load command by using the ``which`` command.
-```bash
-which gmx_mpi
-```
+>```bash
+>which gmx_mpi
+>```
 And it will print something like ``~/discoverer_lesson/build/gromacs-2021.4/bin/gmx_mpi``.
 
-### in Slurm scripts
+## Slurm scripts
 To use this version that you have compiled yourself instead of the centrally installed versions you will need to replace the ``module load`` command in the example slurm script in the previous section as follows
 
 Delete the line
@@ -324,9 +346,11 @@ module load fftw/3/3.3.10-gcc-openmpi
 module load openmpi/4/gcc/latest
 module load openblas/latest-gcc
 
-source /your/path/gromacs-2021.4/gmxrc
+source /your/path/gromacs-2021.4/bin/gmxrc
 ```
 where you need to make sure ``/your/path`` corresponds to the location of your gromacs folder.
+
+---
 
 ## Different build options
 
@@ -359,3 +383,11 @@ and modify the fftw paths in the CMake configuration.
 ```bash
 -DGMX_FFT_LIBRARY=fftw3 -DFFTWF_LIBRARY=/opt/software/fftw/3/3.3.10-gcc-mpich/lib/libfftw3f.so -DFFTWF_INCLUDE_DIR=/opt/software/fftw/3/3.3.10-gcc-mpich/include
 ```
+
+---
+## Things to try
+
+- build a different version of GROMACS, 2021.5 was released this month
+- build with aocc or MPICH
+- build with double precision
+- build a version without MPI enabled -- this can be needed for certain tools such as tune_pme to work correctly
