@@ -187,12 +187,29 @@ The most useful number is the `Performance: 154.366 ns/day`. This tells us how m
         ```
         module load gromacs/2021/2021.4-intel-nogpu-mpi 
         ```
+    - icc + Intel MPI
+        ```
+        module load gromacs/2021/latest-oneapi-nogpu-mpi  
+        ```
+        
 - Try using hybrid OpenMP and MPI, e.g. 64 MPI tasks and 4 OpenMP:
     ```bash
         #SBATCH --nodes           1    
         #SBATCH --ntasks-per-node 64
         #SBATCH --cpus-per-task   4
     ```  
+- Use a different, much larger, 12 million atom benchmark:
+    >```bash
+    >wget https://www.mpinat.mpg.de/632208/benchPEP.zip
+    >
+    >unzip benchPEP.zip
+    >```
+
+    change the mdrun command to use the new `.tpr` file:
+    ```
+    mpirun gmx_mpi mdrun -ntomp ${SLURM_CPUS_PER_TASK} -v -s benchPEP.tpr
+    ```
+    
 ---
 
 
@@ -295,8 +312,6 @@ The ``make check`` command will build and then run the test cases, checking them
 
 
 
-**NOTE**:
-we have found that on Discover's front end login nodes three of the test cases fail numbers 70,71,72. This is due to a UCX warning that does not occur on the compute nodes. The warning can be silenced and the tests will pass by setting an environmental variable, or the tests can be run on a compute node.
 
 
 ### Install
