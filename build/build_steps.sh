@@ -30,7 +30,7 @@ cmake .. -DCMAKE_INSTALL_PREFIX=$(pwd)/.. -DGMX_MPI=ON -DGMX_OPENMP=ON \
 make -j8
 
 # Optional: test the build, uncomment the line below to build and run the regression tests
-make -j8 check
+#make -j8 check
 
 # install
 make install
